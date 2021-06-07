@@ -1,0 +1,97 @@
+
+main.elf:     Dateiformat elf32-avr
+
+Sektionen:
+Idx Name          Größe     VMA       LMA       Datei-Off Ausr.
+  0 .text         0000003c  00000000  00000000  00000074  2**1
+                  CONTENTS, ALLOC, LOAD, READONLY, CODE
+  1 .data         00000000  00800060  0000003c  000000b0  2**0
+                  CONTENTS, ALLOC, LOAD, DATA
+  2 .stab         000006b4  00000000  00000000  000000b0  2**2
+                  CONTENTS, READONLY, DEBUGGING
+  3 .stabstr      00000054  00000000  00000000  00000764  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  4 .comment      00000011  00000000  00000000  000007b8  2**0
+                  CONTENTS, READONLY
+  5 .debug_aranges 00000020  00000000  00000000  000007c9  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  6 .debug_info   000000b4  00000000  00000000  000007e9  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  7 .debug_abbrev 00000071  00000000  00000000  0000089d  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  8 .debug_line   0000005d  00000000  00000000  0000090e  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  9 .debug_frame  00000024  00000000  00000000  0000096c  2**2
+                  CONTENTS, READONLY, DEBUGGING
+ 10 .debug_str    0000011d  00000000  00000000  00000990  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 11 .debug_ranges 00000010  00000000  00000000  00000aad  2**0
+                  CONTENTS, READONLY, DEBUGGING
+
+Disassembly of section .text:
+
+00000000 <__vectors>:
+   0:	09 c0       	rjmp	.+18     	; 0x14 <__ctors_end>
+   2:	0e c0       	rjmp	.+28     	; 0x20 <__bad_interrupt>
+   4:	0d c0       	rjmp	.+26     	; 0x20 <__bad_interrupt>
+   6:	0c c0       	rjmp	.+24     	; 0x20 <__bad_interrupt>
+   8:	0b c0       	rjmp	.+22     	; 0x20 <__bad_interrupt>
+   a:	0a c0       	rjmp	.+20     	; 0x20 <__bad_interrupt>
+   c:	09 c0       	rjmp	.+18     	; 0x20 <__bad_interrupt>
+   e:	08 c0       	rjmp	.+16     	; 0x20 <__bad_interrupt>
+  10:	07 c0       	rjmp	.+14     	; 0x20 <__bad_interrupt>
+  12:	06 c0       	rjmp	.+12     	; 0x20 <__bad_interrupt>
+
+00000014 <__ctors_end>:
+  14:	11 24       	eor	r1, r1
+  16:	1f be       	out	0x3f, r1	; 63
+  18:	cf e9       	ldi	r28, 0x9F	; 159
+  1a:	cd bf       	out	0x3d, r28	; 61
+  1c:	02 d0       	rcall	.+4      	; 0x22 <main>
+  1e:	0c c0       	rjmp	.+24     	; 0x38 <_exit>
+
+00000020 <__bad_interrupt>:
+  20:	ef cf       	rjmp	.-34     	; 0x0 <__vectors>
+
+00000022 <main>:
+    
+}
+void ADC_Init(void)
+{
+	// Vcc als Referenzspannugn wählen
+	ADMUX = (0<<REFS0);
+  22:	17 b8       	out	0x07, r1	; 7
+
+	// Frequenzvorverteiler: 8 --> 1,2 MHz / 8 = 150 kHz (Takt)
+	ADCSRA = (1<<ADPS1) | (1<<ADPS0);
+  24:	83 e0       	ldi	r24, 0x03	; 3
+  26:	86 b9       	out	0x06, r24	; 6
+
+	// "Free-running"-Modus
+	ADCSRA |= (1<<ADATE);
+  28:	35 9a       	sbi	0x06, 5	; 6
+
+	// ADC aktivieren
+	ADCSRA |= (1<<ADEN);
+  2a:	37 9a       	sbi	0x06, 7	; 6
+
+	// "Dummy-Readout" oder kompletter Start des Wandlers (weil free-running)
+	ADCSRA |= (1<<ADSC);
+  2c:	36 9a       	sbi	0x06, 6	; 6
+	while(ADCSRA & (1<<ADSC))	// aud Abschluss der Konverstierung warten
+  2e:	36 99       	sbic	0x06, 6	; 6
+  30:	fe cf       	rjmp	.-4      	; 0x2e <main+0xc>
+	{
+
+	}
+	// Ergebnis auslesen, da sonst die nächste Messung nicht eingetragen wird
+	(void) ADCW;
+  32:	84 b1       	in	r24, 0x04	; 4
+  34:	95 b1       	in	r25, 0x05	; 5
+  36:	ff cf       	rjmp	.-2      	; 0x36 <main+0x14>
+
+00000038 <_exit>:
+  38:	f8 94       	cli
+
+0000003a <__stop_program>:
+  3a:	ff cf       	rjmp	.-2      	; 0x3a <__stop_program>
